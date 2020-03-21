@@ -5,51 +5,55 @@ const HashTable = function() {
   this._storage = LimitedArray(this._limit);
 };
 
-// 해쉬 테이블 삽입 함수
-// 1. 해당 인덱스에 값이 있는 지 없는 지 확인
-// 2. 없다면 배열과 배열에 값을 추가해 대입
-// 3. 있다면 해당 배열을 순회하면서 undefined에 있는 값에 대입
-//const invalidNameAndHeight: [string, number] = ['안희종', 176, 42];
-HashTable.prototype.insert = function(k, v) {
-  // 카운팅해서 크기 증가할지 결정
-  var count = 0;
-  this._storage.each(function(ele) {
+//limit와 storage를 받아서 새롭게 만들어 복사 하는 함수
+function makeNewStorage(storage, limit) {
+  let tempStorage = LimitedArray(limit);
+  storage.each(function(ele, idx) {
+    tempStorage[idx] = ele;
+  });
+  return tempStorage;
+}
+
+function countElement(storage) {
+  let count = 0;
+  storage.each(ele => {
     if (ele !== undefined) {
-      ele.forEach(() => {
-        count++;
-      });
+      count += ele.length;
     }
   });
+  return count;
+}
+
+// 튜플형식의 tempEle선언
+//index생성이 limit의 영향을 받기 때문에 카운팅 후 삽입
+HashTable.prototype.insert = function(k, v) {
+  // 카운팅해서 resize 구현
+  let count = countElement(this._storage);
   if (((count + 1) / this._limit) * 100 > 75) {
     this._limit *= 2;
-    let tempStorage = LimitedArray(this._limit);
-    this._storage.each(function(ele, idx) {
-      tempStorage[idx] = ele;
-    });
-    this._storage = tempStorage;
+    this._storage = makeNewStorage(this._storage, this._limit);
   }
 
-  // 튜플형식의 tempEle선언
   const index = getIndexBelowMaxForKey(k, this._limit);
+  let tempEle = [k, v];
+  let tempArr;
   if (this._storage.get(index) !== undefined) {
-    let tempArr = this._storage.get(index);
-    let tempEle = [k, v];
+    tempArr = this._storage.get(index);
     tempArr.push(tempEle);
-    this._storage.set(index, tempArr);
   } else {
-    let tempArr = [];
-    let tempEle = [k, v];
+    tempArr = [];
     tempArr.push(tempEle);
-    this._storage.set(index, tempArr);
   }
+  this._storage.set(index, tempArr);
 };
 
+//
 HashTable.prototype.retrieve = function(k) {
   const index = getIndexBelowMaxForKey(k, this._limit);
   let tempArr = this._storage.get(index);
   let result = undefined;
   if (tempArr !== undefined) {
-    tempArr.forEach(function(ele) {
+    tempArr.forEach(ele => {
       if (k === ele[0]) {
         result = ele[1];
       }
@@ -58,13 +62,12 @@ HashTable.prototype.retrieve = function(k) {
   return result;
 };
 
+// filter를 이용해서 걸러내고 다시 저장
 HashTable.prototype.remove = function(k) {
   const index = getIndexBelowMaxForKey(k, this._limit);
-
-  //filter를 이용해서 걸러내고 다시 저장
   let tempArr = this._storage.get(index);
   if (tempArr !== undefined) {
-    tempArr = tempArr.filter(function(ele) {
+    tempArr = tempArr.filter(ele => {
       if (k === ele[0]) {
         return false;
       }
@@ -78,21 +81,10 @@ HashTable.prototype.remove = function(k) {
   }
 
   // 카운팅해서 resize 구현
-  var count = 0;
-  this._storage.each(function(ele) {
-    if (ele !== undefined) {
-      ele.forEach(() => {
-        count++;
-      });
-    }
-  });
+  let count = countElement(this._storage);
   if ((count / this._limit) * 100 < 25 && this._limit > 8) {
     this._limit /= 2;
-    let tempStorage = LimitedArray(this._limit);
-    this._storage.each(function(ele, idx) {
-      tempStorage[idx] = ele;
-    });
-    this._storage = tempStorage;
+    this._storage = makeNewStorage(this._storage, this._limit);
   }
 };
 
