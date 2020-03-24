@@ -6,6 +6,9 @@
     "test": "jest",
     "test:part-one": "jest part-one/",
     "test:part-two": "jest part-two/",
+    "test:graph": "jest part-two/__test__/graph.test.js",
+    "test:tree": "jest part-two/__test__/tree.test.js",
+    "test:binarySearchTree": "jest part-two/__test__/binarySearchTree.test.js",
     "precommit": "lint-staged",
     "lint": "eslint part-one/src part-two/src --quiet",
     "submit": "node .travis/submit.js"
