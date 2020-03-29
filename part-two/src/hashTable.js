@@ -3,6 +3,7 @@ const { LimitedArray, getIndexBelowMaxForKey } = require('./hashTableHelpers');
 const HashTable = function() {
   this._limit = 8;
   this._storage = LimitedArray(this._limit);
+  this._size = 0;
 };
 
 //limit와 storage를 받아서 새롭게 만들어 복사 하는 함수
@@ -28,26 +29,18 @@ function countElement(storage) {
 //index생성이 limit의 영향을 받기 때문에 카운팅 후 삽입
 HashTable.prototype.insert = function(k, v) {
   // 카운팅해서 resize 구현
-  let count = countElement(this._storage);
-  if (((count + 1) / this._limit) * 100 > 75) {
+  if (this._size + 1 > this._limit * 0.75) {
     this._limit *= 2;
     this._storage = makeNewStorage(this._storage, this._limit);
   }
 
   const index = getIndexBelowMaxForKey(k, this._limit);
-  let tempEle = [k, v];
-  let tempArr;
-  if (this._storage.get(index) !== undefined) {
-    tempArr = this._storage.get(index);
-    tempArr.push(tempEle);
-  } else {
-    tempArr = [];
-    tempArr.push(tempEle);
-  }
+  let tempArr = this._storage.get(index) || [];
+  tempArr.push([k, v]);
   this._storage.set(index, tempArr);
+  this._size += 1;
 };
 
-//
 HashTable.prototype.retrieve = function(k) {
   const index = getIndexBelowMaxForKey(k, this._limit);
   let tempArr = this._storage.get(index);
